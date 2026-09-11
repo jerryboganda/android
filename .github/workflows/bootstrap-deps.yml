@@ -1,0 +1,47 @@
+# Provision the project's external reverse-engineering / pentest dependencies in the
+# cloud (no local installs). Runs bootstrap-reverse.sh per capability so one failure
+# does not abort the rest, then refreshes the tool index for a provisioning report.
+name: Bootstrap dependencies (cloud)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/bootstrap-deps.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap-linux:
+    name: provision tools (ubuntu-latest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Provision capabilities
+        shell: bash
+        run: |
+          set -u
+          CAPS="jadx apktool r2 adb binwalk yara nmap pwntools frida seclists idalib-mcp jshookmcp reqable-mcp xquik-mcp anything-analyzer ghidra-mcp proxycat burpsuite-mcp pentestswarm jeb-pro binaryninja agent-browser"
+          for cap in $CAPS; do
+            echo "=================================================="
+            echo ">>> bootstrap capability: $cap"
+            bash skills/scripts/bootstrap-reverse.sh "$cap" --skip-refresh \
+              || echo "RESULT: $cap did not fully install (continuing)"
+          done
+          echo "=== bootstrap pass complete ==="
+
+      - name: Refresh tool index
+        shell: bash
+        run: bash skills/scripts/refresh-tool-index.sh || true
+
+      - name: Upload tool index
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: tool-index
+          path: skills/tool-index.md
+          if-no-files-found: warn
