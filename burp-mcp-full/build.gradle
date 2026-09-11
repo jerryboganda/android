@@ -25,6 +25,8 @@ jar {
     manifest {
         attributes 'Implementation-Title': 'BurpMCP Full Control'
         attributes 'Implementation-Version': version
+        // Montoya entry point so Burp Suite can load the jar via Extensions -> Add -> Java
+        attributes 'Extension-Class': 'com.burpmcp.BurpMcpExtension'
     }
     // Fat jar - include all dependencies
     from {

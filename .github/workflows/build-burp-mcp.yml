@@ -43,6 +43,10 @@ jobs:
           ls -l burp-mcp-full/build/libs/burp-mcp-full.jar
           echo "jar size: $(stat -c%s burp-mcp-full/build/libs/burp-mcp-full.jar) bytes"
 
+      - name: Show jar manifest
+        shell: bash
+        run: unzip -p burp-mcp-full/build/libs/burp-mcp-full.jar META-INF/MANIFEST.MF
+
       - name: Upload jar artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
