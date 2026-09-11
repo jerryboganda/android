@@ -1,0 +1,51 @@
+# Build burp-mcp-full (Gradle/Java fat jar) on GitHub-hosted runners.
+# This is the project's one real compile step; CI only validates the wrapper,
+# so this workflow actually builds the artifact in the cloud (no local installs).
+name: Build burp-mcp-full
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'burp-mcp-full/**'
+      - '.github/workflows/build-burp-mcp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build burp-mcp-full jar
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Make gradlew executable
+        shell: bash
+        run: chmod +x burp-mcp-full/gradlew
+
+      - name: Build fat jar
+        shell: bash
+        run: |
+          cd burp-mcp-full
+          ./gradlew build --no-daemon --console=plain
+
+      - name: Verify artifact
+        shell: bash
+        run: |
+          ls -l burp-mcp-full/build/libs/burp-mcp-full.jar
+          echo "jar size: $(stat -c%s burp-mcp-full/build/libs/burp-mcp-full.jar) bytes"
+
+      - name: Upload jar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: burp-mcp-full
+          path: burp-mcp-full/build/libs/burp-mcp-full.jar
+          if-no-files-found: error
